@@ -1,5 +1,37 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
+
+mod components;
+mod plugins;
+mod systems;
 
 fn main() {
-    App::new().run();
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+        .add_plugins(RapierDebugRenderPlugin::default())
+        .add_systems(Startup, (setup_graphics, setup_physics))
+        .add_systems(Update, print_ball_altitude)
+        .run();
+}
+
+fn setup_graphics(mut commands: Commands) {
+    commands.spawn(Camera2dBundle::default());
+}
+
+fn setup_physics(mut commands: Commands) {
+    commands
+        .spawn(Collider::cuboid(500.0, 500.0))
+        .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)));
+    commands
+        .spawn(RigidBody::Dynamic)
+        .insert(Collider::ball(50.0))
+        .insert(Restitution::coefficient(0.7))
+        .insert(TransformBundle::from(Transform::from_xyz(0.0, -100.0, 0.0)));
+}
+
+fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
+    for transform in positions.iter() {
+        println!("Ball altitude: {}", transform.translation.y);
+    }
 }
